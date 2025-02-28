@@ -38,7 +38,7 @@ export default defineConfig({
             customCss: ['./src/tailwind.css'],
             expressiveCode: {
                 styleOverrides: { borderRadius: '0.5rem' },
-                themes: ['one-dark-pro', 'one-light'],
+                themes: ['one-dark-pro', 'one-light', 'github-dark'],
             },
 
         }), tailwind({ applyBaseStyles: false }), solidJs()],
