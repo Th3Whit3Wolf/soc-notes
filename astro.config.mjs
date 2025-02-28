@@ -7,6 +7,10 @@ import Icons from 'unplugin-icons/vite';
 
 // https://astro.build/config
 export default defineConfig({
+    site: process.env.CI
+        ? 'https://th3whit3wolf.github.io'
+        : 'http://localhost:4321',
+    base: process.env.CI ? '/soc-notes' : undefined,
     integrations: [
         solidJs(),
         starlight({
