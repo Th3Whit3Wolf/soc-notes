@@ -1,0 +1,191 @@
+---
+title: Linux Forensic Cheatsheet
+template: doc
+hero: 
+    title: 'Linux Forensic Cheatsheet'
+---
+
+import FRLoc from '../../../components/custom/ForensicReviewLocation.astro';
+import FRCmd from '../../../components/custom/ForensicReviewCommand.astro';
+
+
+## System and OS Information
+---
+
+###  OS Release Information
+<FRLoc location="/etc/os-release">
+Can be read using `cat`, `vim` or any text editor or viewer
+</FRLoc>
+
+###  User Accounts Information
+
+<FRLoc location="/etc/passwd">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  User Group Information
+
+<FRLoc location="/etc/group">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Sudoers List
+
+<FRLoc location="/etc/sudoers">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Login Information
+
+<FRLoc location="/var/log/wtmp">
+Can be read using `last` utility
+</FRLoc>
+
+###  Authentication Logs
+
+<FRLoc location="/var/log/auth.log">
+Can be read using `cat`, `vim` or any text editor or viewer.
+Use `grep` for better filtering.
+Might also have `auth.log1`, `auth.log2` etc as log files that have been rotated.
+</FRLoc>
+
+
+## System Configuration
+---
+
+###  Hostname
+
+<FRLoc location="/etc/hostname">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Timezone Information
+
+<FRLoc location="/etc/timezone">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Network Interfaces
+
+<FRLoc location="/etc/network/interfaces">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+<FRCmd command='ip address show`'>
+The above command is suitable only for live analysis.
+</FRCmd>
+
+###  Open Network Connections
+
+<FRCmd command='netstat -natp'>
+The above command is suitable only for live analysis
+</FRCmd>
+
+###  Running Processes
+
+<FRCmd command='ps aux'>
+The above command is suitable only for live analysis
+</FRCmd>
+
+###  DNS Information
+
+<FRLoc location="/etc/hosts">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+<FRLoc location="/etc/resolve.conf">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+## Persistence Mechanism
+---
+
+###  Cron Jobs
+
+<FRLoc location="/etc/crontab">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Services
+
+<FRLoc location="/etc/init.d">
+Registered services are present in this directory
+</FRLoc>
+
+###  BASH Shell Startup
+
+<FRLoc location="/home/<user>/.bashrc">
+for each user.
+</FRLoc>
+
+<FRLoc location="/etc/bash.bashrc">
+and `/etc/profile` for system wide
+settings. Can be read using `cat`, `vim` or any text editor or viewer
+</FRLoc>
+
+## Evidence of Execution
+---
+
+###  Authentication Logs
+
+<FRLoc location="/var/log/auth.log">
+```bash
+/var/log/auth.log* |grep -i COMMAND;
+```
+the `grep` can be used to filter the results. Can be read using `cat`,
+`vim` or any text editor or viewer
+</FRLoc>
+
+###  Bash History
+
+<FRLoc location="/home/<user>/.bash_history">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+###  Vim History
+
+<FRLoc location="/home/<user>/.viminfo">
+Can be read using `cat`, `vim` or any text editor or viewer.
+</FRLoc>
+
+## Log Files
+---
+
+###  Syslogs
+
+<FRLoc location="/var/log/syslog">
+Can be read using `cat`, `vim` or any text editor or viewer.
+Use `grep` or similar utility to filter results as per requirement.
+</FRLoc>
+
+###  Authentication Logs
+
+<FRLoc location="/var/log/auth.log">
+Can be read using `cat`, `vim` or any text editor or viewer.
+Use `grep` or similar utility to filter results as per requirement.
+</FRLoc>
+
+###  Third-Party Logs
+
+<FRLoc location="/var/log">
+Logs for each third-party application can be found in their specific directories in this location.
+</FRLoc>
+
+## Hashes
+
+### Generate MD5 Hash of a File
+
+```bash
+md5sum <file>
+```
+
+### Generate SHA1 Hash of a File
+
+```bash
+sha1sum <file>
+```
+
+### Generate SHA256 Hash of a File
+
+```bash
+sha256sum <file>
+```

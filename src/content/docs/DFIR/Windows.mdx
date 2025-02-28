@@ -1,0 +1,260 @@
+---
+title: Windows Forensic Cheatsheet
+template: doc
+hero: 
+    title: 'Windows Forensic Cheatsheet'
+---
+
+## System Information and Accounts
+---
+
+### OS Version
+
+```powershell
+SOFTWARE\Microsoft\Windows NT\CurrentVersion
+```
+
+### Current Control Set
+
+```powershell
+HKLM\SYSTEM\CurrentControlSet
+SYSTEM\Select\Current
+SYSTEM\Select\LastKnownGood
+```
+
+### Computer Name
+
+```powershell
+SYSTEM\CurrentControlSet\Control\ComputerName
+\ComputerName
+```
+
+### Time Zone Information
+
+```powershell
+SYSTEM\CurrentControlSet\Control
+\TimeZoneInformation
+```
+
+### Network Interfaces and Past Networks
+
+```powershell
+SYSTEM\CurrentControlSet\Services\Tcpip
+\Parameters\Interfaces
+```
+
+### Autostart Programs (Autoruns)
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Run
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\RunOnce
+```
+
+```powershell
+SOFTWARE\Microsoft\Windows\CurrentVersion
+\RunOnce
+```
+```powershell
+SOFTWARE\Microsoft\Windows\CurrentVersion
+\policies\Explorer\Run
+```
+```powershell
+SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+```
+
+### SAM Hive and User Information
+
+```powershell
+SAM\Domains\Account\Users
+```
+
+## Files/Folder Usage or Knowledge
+---
+
+### Recent Files
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Explorer\RecentDocs
+```
+
+### Office Recent Files
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Office\VERSION
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Office\VERSION
+\UserMRU\LiveID_####\FileMRU
+```
+
+### ShellBags
+
+```powershell
+USRCLASS.DAT\Local Settings\Software\Microsoft
+\Windows\Shell\Bags
+```
+```powershell
+USRCLASS.DAT\Local Settings\Software\Microsoft
+\Windows\Shell\BagMRU
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows\Shell\BagMRU
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows\Shell\Bags
+```
+
+### Open/Save and LastVisited Dialog MRUs
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Explorer\ComDlg32\OpenSavePIDlMRU
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU
+```
+
+### Windows Explorer Address/Search Bars
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Explorer\TypedPaths
+```
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\CurrentVersion\Explorer\WordWheelQuery
+```
+
+## External/USB Device Forensics
+---
+
+### Device Identification
+
+```powershell
+SYSTEM\CurrentControlSet\Enum\USBSTOR
+```
+```powershell
+SYSTEM\CurrentControlSet\Enum\USB
+```
+
+### First/Last Times
+
+```powershell
+SYSTEM\CurrentControlSet\Enum\USBSTOR
+\Ven_Prod_Version\USBSerial#\Properties
+\{83da6326-97a6-4088-9453-a19231573b29}\####
+Oo64=first connection
+0066=last connection
+0067=last removal
+```
+
+### USB Device Volume Name
+
+```powershell
+SOFTWARE\Microsoft\Windows Portable Devices\Devices
+```
+
+## Evidence of Execution
+---
+
+### UserAssist
+
+```powershell
+NTUSER.DAT\Software\Microsoft\Windows
+\Currentversion\Explorer\UserAssist\{GUID}\Count
+```
+
+### ShimCache
+
+```powershell
+SYSTEM\CurrentControlSet\Control\Session Manager
+\AppCompatCache
+```
+
+### AmCache
+
+```powershell
+Amcache.hve\Root\File\{Volume GUID}\
+```
+
+### BAM/DAM
+
+```powershell
+SYSTEM\CurrentControlSet\Services\bam\UserSettings
+\{SID}
+```
+```powershell
+SYSTEM\CurrentControlSet\Services\dam\UserSettings
+\{SID}
+```
+
+## Hashes
+
+### Generate MD5 Hash of a File
+
+```powershell
+Get-FileHash -algorithm MD5 <file>
+```
+
+### Generate SHA1 Hash of a File
+
+```powershell
+Get-FileHash -algorithm SHA1 <file>
+```
+
+### Generate SHA256 Hash of a File
+
+```powershell
+Get-FileHash <file>
+```
+
+## Investigation
+
+### LNK Files
+
+These files can be found at 
+
+```md
+C:\Users\$USER$\AppData\Roaming\Microsoft\Windows\Recent
+```
+
+### Prefetch Files 
+
+- **PECmd** - This tool can be used to view the prefetch files. `PECmd.exe -f <path/to/file.pf>`
+
+These files can be found at 
+
+```md
+C:\Windows\Prefetch
+```
+
+### Jumplist Files
+
+These files can be found at
+
+```md
+C:\Users\% USERNAME%\AppData\ Roaming\Microsoft\Windows\Recent\AutomaticDestinations
+C:\Users\%USERNAME%\AppData\ Roaming\Microsoft\Windows\Recent\CustomDestinations
+```
+
+### Logon Events
+- **ID 4624** - successful logons to the system.
+- **ID 4672** - Special Logon events where administrators logs in.
+- **ID 4625** - Failed Logon events.
+- **ID 4634** - Logoffs from the current session.
+
+These event logs can be found at
+
+```md
+C:\Windows\System32\winevt\Logs
+```
+
+### Capture and view the browser history with 
+- **Browser History Viewer** 
+- **Browser History Capturer**

@@ -1,0 +1,17 @@
+{
+  "extends": "astro/tsconfigs/base",
+  "include": [
+    ".astro/types.d.ts",
+    "**/*"
+  ],
+  "exclude": [
+    "dist"
+  ],
+  "compilerOptions": {
+    "types": [
+      "unplugin-icons/types/astro"
+    ],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  }
+}

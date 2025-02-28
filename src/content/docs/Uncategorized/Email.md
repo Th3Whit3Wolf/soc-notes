@@ -1,0 +1,152 @@
+---
+title: Email Related Cheat Sheet
+template: doc
+hero: 
+    title: 'Email Related Cheat Sheet'
+---
+
+### Gathering IOCs
+
+1. **Email Artifacts** :
+
+- [ ] Sending Email Address
+- [ ] Subject Line
+- [ ] Recipient Email Addresses
+- [ ] Sending Server IP & Reverse DNS
+- [ ] Reply-To Address
+- [ ] Date & Time
+
+2. **Web Artifacts** :
+
+- [ ] Full URLs
+- [ ] Domain Names
+
+3. **File Artifacts** :
+
+- [ ] Attachment Name
+- [ ] MD5, SHA1, SHA256 Hash Value
+
+## Specification
+
+---
+
+- [DMARC](https://dmarcian.com/getting-started-with-dmarc/)
+- [DKIM](https://dmarcian.com/dkim-selectors/)
+- [SPF](https://dmarcian.com/spf-syntax-table/)
+- [S/Mime](https://learn.microsoft.com/en-us/exchange/security-and-compliance/smime-exo/smime-exo)
+[SMTP Status Codes](https://www.mailersend.com/blog/smtp-codes)
+[Wireshark SMTP Filter Options](https://www.wireshark.org/docs/dfref/s/smtp.html)
+
+## Scan
+
+---
+
+[MX Toolbox](https://mxtoolbox.com/)
+
+### Message Header
+
+- [Google Admin Toolbox Messageheader](https://toolbox.googleapps.com/apps/messageheader/analyzeheader)
+- [Message Header Analyzer](https://mha.azurewebsites.net/)
+- [Mail header analysis](https://mailheader.org/)
+
+## SMTP Status Codes
+
+The [current SMTP standard](https://datatracker.ietf.org/doc/html/rfc5321) defines the response codes but they are applied differently between SMTP servers. Not every mail server is configured in the same way and thus there *will* be differences in how mail delivery failures are interpreted.
+
+:::tip[Remember]
+Because no two SMTP servers are alike, a “mailbox unavailable” response on one server may be a “message rejected” error on another!
+:::
+
+<details>
+<summary>General Status Codes</summary>
+
+SMTP codes that start with 2 and 3 are general status messages that are sent in reply to requests from the sending server. They do not indicate errors in the mail delivery but are used as prompts in the exchange between the mail servers.
+
+| **SMTP code** | **Description**                                                                         | **Meaning**                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 214           | Help message                                                                            | A response to the HELP command that usually includes a link or URL to the FAQ page.                   |
+| 220           | SMTP Service ready                                                                      | The receiving server is ready for the next command.                                                   |
+| 221           | Service closing transmission channel                                                    | The receiving server is closing the SMTP connection.                                                  |
+| 235           | 2.7.0 Authentication succeeded                                                          | The sending server’s authentication is successful.                                                    |
+| 250           | Requested mail action okay, completed                                                   | Success! The email was delivered.                                                                     |
+| 251           | User not local; will forward to <forward-path>                                          | The receiving server doesn’t recognize the recipient but it will forward it to another email address. |
+| 252           | Cannot VRFY user, but will accept message and attempt delivery                          | The receiving server doesn’t recognize the recipient but it will try to deliver the email anyway.     |
+| 334           | Reponse to email authentication AUTH command when the authentication method is accepted | Authentication has been successful.                                                                   |
+| 354           | Start mail input                                                                        | The email “header” has been received, the server is now waiting for the “body” of the message.        |
+
+</details>
+
+<details>
+<summary>Temporary SMTP Error Codes</summary>
+
+SMTP 400 codes are transient errors and are usually related to issues at the receiving mail server. Messages are returned as a soft bounce and the sender may try again after, for example, reducing the size of the attachments in the email.
+
+| **SMTP code** | **Description**                                         | **Meaning**                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 421           | Service not available, closing transmission channel     | The receiving server or sending server is not reachable but another mail delivery will be attempted. If you are using a remote server like MailerSend's SMTP relay to send emails, test that you can connect to it successfully. Otherwise, you may wish to check the receiving server’s availability.                                                                                                                                                  |
+| 450           | Requested mail action not taken: mailbox unavailable    | This error could mean that the recipient does not exist, the mailbox does not have permission to receive the email, or the message was rejected due to a blocklist or filter.  <br>  <br>To fix this, you should confirm the recipient’s email address, see if [your IP address is on a blocklist](https://www.mailercheck.com/articles/email-blocklist-removal), test your email for spam-like content, or try sending an email without an attachment. |
+| 451           | Requested action aborted: error in processing           | The receiving server is unable to process the message due to [email authentication rules](https://www.mailersend.com/blog/email-authentication). For example, if Sender Policy Framework (SPF) is being used, you should confirm that a DNS lookup can be made for your sending domain and that the domain’s name server is functioning properly.                                                                                                       |
+| 452           | Requested action not taken: insufficient system storage | The receiving server is overwhelmed by too many messages being sent at once or is out of memory or storage space. Review your sending rate by looking at your mail-sending queue and logs, or inform the server’s mail administrator about the storage and free memory issues.                                                                                                                                                                          |
+| 455           | Server unable to accommodate the parameters             | The server cannot process the command at this time. You can retry after waiting a while or contact the receiving server’s mail administrator if the error persists.                                                                                                                                                                                                                                                                                     |
+
+</details>
+
+<details>
+<summary>Permanent SMTP Error Codes</summary>
+
+SMTP 500 reply codes are mail delivery errors of a permanent nature that are usually caused by the sender. The receiving server returns the message as a hard bounce and prefers that the sender not try again unless the problem is fixed.
+
+The 500 series starts with errors in issuing SMTP commands like the following examples:
+
+| **SMTP code** | **Description**                         | **Meaning**                                                                                                                                                                                                                        |
+| ------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 500           | Syntax error, command unrecognized      | The receiving server does not recognize the command. If your server is using antivirus or firewall software, try disabling them before sending the message again.                                                                  |
+| 501           | Syntax error in parameters or arguments | The command is recognized but there are errors with its options or command arguments. This server error is sometimes returned for an invalid or incorrect email! But it may be due to your antivirus or firewall software as well. |
+| 502           | Command not implemented                 | The command is currently not supported on the receiving server. Review your sending commands as well as your MTA’s configuration.                                                                                                  |
+| 503           | Bad sequence of commands                | The receiving server recognizes the command but its parameters or options are in the wrong sequence. This sometimes appears when the email account is not authenticated. Do review your MTA’s configuration as well.               |
+| 504           | Command parameter not implemented       | Similar to 502, the command is recognized but its parameters or options are not supported on the receiving server. You may wish to review your sending commands as well as your MTA’s configuration.                               |
+| 521           | Server does not accept mail             | The server does not receive or send mail. This may be because the server is part of a mail relay. The email may fail or be relayed to another mail server. Check if the email has been delivered to confirm.                       |
+
+</details>
+
+
+## Wireshark
+
+<details>
+<summary>SMTP Filter Options</summary>
+
+Taken from [Wireshark](https://www.wireshark.org/docs/dfref/s/smtp.html)
+
+|Field name|Description|Type|Versions|
+|---|---|---|---|
+|smtp.auth.password|Password|Character string|1.10.0 to 4.4.5|
+|smtp.auth.username|Username|Character string|1.10.0 to 4.4.5|
+|smtp.auth.username_password|Username/Password|Character string|2.0.1 to 4.4.5|
+|smtp.base64_decode|base64 decode failed or is not enabled (check SMTP preferences)|Label|2.0.1 to 4.4.5|
+|smtp.command_line|Command Line|Character string|1.8.0 to 4.4.5|
+|smtp.data.fragment|DATA fragment|Frame number|1.0.0 to 4.4.5|
+|smtp.data.fragment.count|DATA fragment count|Unsigned integer (32 bits)|1.6.0 to 4.4.5|
+|smtp.data.fragment.error|DATA defragmentation error|Frame number|1.0.0 to 4.4.5|
+|smtp.data.fragment.multiple_tails|DATA has multiple tail fragments|Boolean|1.0.0 to 4.4.5|
+|smtp.data.fragment.overlap|DATA fragment overlap|Boolean|1.0.0 to 4.4.5|
+|smtp.data.fragment.overlap.conflicts|DATA fragment overlapping with conflicting data|Boolean|1.0.0 to 4.4.5|
+|smtp.data.fragment.too_long_fragment|DATA fragment too long|Boolean|1.0.0 to 4.4.5|
+|smtp.data.fragments|DATA fragments|Label|1.0.0 to 4.4.5|
+|smtp.data.reassembled.in|Reassembled DATA in frame|Frame number|1.0.0 to 4.4.5|
+|smtp.data.reassembled.length|Reassembled DATA length|Unsigned integer (32 bits)|1.4.0 to 4.4.5|
+|smtp.eom|EOM|Label|2.0.0 to 4.4.5|
+|smtp.message|Message|Character string|1.8.0 to 4.4.5|
+|smtp.req|Request|Boolean|1.0.0 to 4.4.5|
+|smtp.req.command|Command|Character string|1.0.0 to 4.4.5|
+|smtp.req.parameter|Request parameter|Character string|1.0.0 to 4.4.5|
+|smtp.response|Response|Character string|1.8.0 to 4.4.5|
+|smtp.response.code|Response code|Unsigned integer (32 bits)|1.0.0 to 4.4.5|
+|smtp.response.code.unexpected|Unexpected response code in multiline response|Label|3.2.0 to 4.4.5|
+|smtp.rsp|Response|Boolean|1.0.0 to 4.4.5|
+|smtp.rsp.parameter|Response parameter|Character string|1.0.0 to 4.4.5|
+
+</details>
+
+## Other Resources
+
+[Phishing IR Playbook](https://github.com/counteractive/incident-response-plan-template/blob/master/playbooks/playbook-phishing.md)

@@ -1,0 +1,340 @@
+---
+title: Splunk
+template: doc
+hero: 
+    title: 'Splunk'
+    tagline: > 
+        a data analytics platform that helps businesses collect, analyze, and visualize data. It's used for IT operations, cyber security, application management, and more.
+---
+
+Queries must start by referencing the dataset
+
+```md
+index="botsv1"
+```
+
+To search for a source IP (src) address with a value of `127.0.0.1`
+
+```md
+index="botsv1" src="127.0.0.1"
+```
+
+To search for a destination IP (dst) address that this source IP address made a connection with a value of `X.X.X.X`
+
+```md
+index="botsv1" src="127.0.0.1" dst="X.X.X.X"
+```
+
+## Common Search Commands
+
+| Search Command | Description |
+| :------------- | :---------- |
+| chart, timechart | Returns results in a tabular output for (time-series) charting |
+| dedup X          | Removes duplicate results on a field X |
+| eval             | Calculates an expression (see Calculations) |
+| fields           | Removes fields from search results |
+| head/tail N      | Returns the first/last N results, where N is a positive integer |
+| lookup           | Adds field values from an external source |
+| rename           | Renames a field. Use wildcards (*) to specify multiple fields. |
+| rex              | Extract fields according to specified regular expression(s) |
+| search           | Filters results to those that match the search expression |
+| sort X           | Sorts the search results by the specified fields X |
+| stats            | Provides statistics, grouped optionally by fields |
+| mstats           | Similar to stats but used on metrics instead of events |
+| table            | Displays data fields in table format. |
+| top/rare         | Displays the most/least common values of a field |
+| transaction      | Groups search results into transactions |
+| where            | Filters search results using eval expressions. For comparing two different fields |
+
+## SPL Syntax
+
+Begin by specifying the data using the parameter index, the equal sign =, and the data index of your choice: `index=index_of_choice`.
+
+Complex queries involve the pipe character` |`, which feeds the output of the previous query into the next.
+
+### Basic Search
+
+This is the shorthand query to find the word hacker in an index called cybersecurity:
+
+`index=cybersecurity hacker`
+
+| SPL search terms | Description |
+| :--------------- | :---------- |
+| **Full Text Search** | |
+| Cybersecurity | Find the word “Cybersecurity” irrespective of capitalization |
+| White Black Hat | Find those three words in any order irrespective of capitalization |
+| "White Black+Hat" | Find the exact phrase with the given special characters, irrespective of capitalization |
+| **Filter by fields**	 | |
+| source="/var/log/myapp/access.log" status=404 | All lines where the field status has value 404 from the file /var/log/myapp/access.log |
+| source="bigdata.rar:*" index="data_tutorial" Code=RED | All entries where the field Code has value RED in the archive bigdata.rar indexed as data_tutorial |
+| index="customer_feedback" _raw="*excellent*" | All entries whose text contains the keyword “excellent” in the indexed data set customer_feedback |
+| **Filter by host**	| |
+| host="myblog" source="/var/log/syslog" Fatal | Show all Fatal entries from /var/log/syslog belonging to the blog host myblog |
+| **Selecting an index**	| |
+| index="myIndex" password | Access the index called myIndex and text matching password. |
+| source="test_data.zip:*" | Access the data archive called test_data.zip and parse all its entries (*). |
+| sourcetype="datasource01" | (Optional) Search data sources whose type is datasource01. |
+
+This syntax also applies to the arguments following the search keyword. Here is an example of a longer SPL search string:
+
+`index=* OR index=_* sourcetype=generic_logs | search Cybersecurity | head 10000`
+
+In this example, `index=* OR index=_* sourcetype=generic_logs` is the data body on which Splunk performs `search Cybersecurity`, and then `head 10000` causes Splunk to show only the first (up to) 10,000 entries.
+
+### Basic Filtering
+
+You can filter your data using regular expressions and the Splunk keywords rex and regex. An example of finding deprecation warnings in the logs of an app would be:
+
+`index="app_logs" | regex error="Deprecation Warning"`
+
+SPL filters	Description	Examples
+
+<table>
+  <caption>
+    Basic Filtering
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">SPL filters</th>
+      <th scope="col">Description</th>
+      <th scope="col">Examples</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">search</th>
+      <td>Find keywords and/or fields with given values</td>
+      <td>
+        <ul>
+            <li>index=names | search Chris</li>
+            <li>index=emails | search   emailAddr="*mysite.com"</li>
+        </ul> 
+        </td>
+    </tr>
+    <tr>
+      <th scope="row">regex</th>
+      <td>Find expressions matching a given regular expression</td>
+      <td>45</td>
+    </tr>
+    <tr>
+      <th scope="row">rex</th>
+      <td>Extract fields according to specified regular expression(s) into a new field for further processing</td>
+      <td>Extract email addresses:<br><code>source="email_dump.txt" | rex <br>field=_raw "From: <br>&lt;(?&lt;from&gt;.*)&gt; To: &lt;(?&lt;to&gt;.*)&gt;"</code>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+
+The biggest difference between search and regex is that you can only exclude query strings with regex. These two are equivalent:
+- `source="access.log" Fatal`
+- `source="access.log" | regex _raw=".*Fatal.*"`
+
+But you can only use regex to find events that do not include your desired search term:
+- `source="access.log" | regex _raw!=".*Fatal.*"`
+
+The Splunk keyword rex helps determine the alphabetical codes involved in this dataset:
+
+
+![Alphabetical codes in sample data](https://www.stationx.net/wp-content/uploads/2022/10/Alphabetical-codes-in-sample-data-close-up.png)
+
+
+### Calculations
+
+Combine the following with eval to do computations on your data, such as finding the mean, longest and shortest comments in the following example:
+
+`index=comments | eval cmt_len=len(comment) | stats`
+
+`avg(cmt_len), max(cmt_len), min(cmt_len) by index`
+
+| Function            | Return value / Action                                                                                                                                                                                                                                                                                                                                                | Usage:eval foo=…                                                                         |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| abs(X)              | absolute value of X                                                                                                                                                                                                                                                                                                                                                  | abs(number)                                                                              |
+| case(X,"Y",…)       | Takes pairs of arguments X and Y, where X arguments are Boolean expressions. When evaluated to TRUE, the arguments return the corresponding Y argument                                                                                                                                                                                                               | case(id == 0, "Amy", id == 1,"Brad", id == 2, "Chris")                                   |
+| ceil(X)             | Ceiling of a number X                                                                                                                                                                                                                                                                                                                                                | ceil(1.9)                                                                                |
+| cidrmatch("X",Y)    | Identifies IP addresses that belong to a particular subnet                                                                                                                                                                                                                                                                                                           | cidrmatch("123.132.32.0/25",ip)                                                          |
+| coalesce(X,…)       | The first value that is not NULL                                                                                                                                                                                                                                                                                                                                     | coalesce(null(), "Returned val", null())                                                 |
+| cos(X)              | Cosine of X                                                                                                                                                                                                                                                                                                                                                          | n=cos(60) #1/2                                                                           |
+| exact(X)            | Evaluates an expression X using double precision floating point arithmetic                                                                                                                                                                                                                                                                                           | exact(3.14*num)                                                                          |
+| exp(X)              | e (natural number) to the power X (eX)                                                                                                                                                                                                                                                                                                                               | exp(3)                                                                                   |
+| if(X,Y,Z)           | If X evaluates to TRUE, the result is the second argument Y. If X evaluates to FALSE, the result evaluates to the third argument Z                                                                                                                                                                                                                                   | if(error==200, "OK", "Error")&nbsp;                                                      |
+| in(field,valuelist) | TRUE if a value in valuelist matches a value in field. You must use the in() function embedded inside the if() function                                                                                                                                                                                                                                              | if(in(status, "404","500","503"),"true","false")                                         |
+| isbool(X)           | TRUE if X is Boolean                                                                                                                                                                                                                                                                                                                                                 | isbool(field)                                                                            |
+| isint(X)            | TRUE if X is an integer                                                                                                                                                                                                                                                                                                                                              | isint(field)                                                                             |
+| isnull(X)           | TRUE if X is NULL                                                                                                                                                                                                                                                                                                                                                    | isnull(field)                                                                            |
+| isstr(X)            | TRUE if X is a string                                                                                                                                                                                                                                                                                                                                                | isstr(field)                                                                             |
+| len(X)              | Character length of string X                                                                                                                                                                                                                                                                                                                                         | len(field)                                                                               |
+| like(X,"Y")         | TRUE if and only if X is like the SQLite pattern in Y                                                                                                                                                                                                                                                                                                                | like(field, "addr%")                                                                     |
+| log(X,Y)            | Logarithm of the first argument X where the second argument Y is the base. Y defaults to 10 (base-10 logarithm)                                                                                                                                                                                                                                                      | log(number,2)                                                                            |
+| lower(X)            | Lowercase of string X                                                                                                                                                                                                                                                                                                                                                | lower(username)                                                                          |
+| ltrim(X,Y)          | X with the characters in Y trimmed from the left side. Y defaults to spaces and tabs                                                                                                                                                                                                                                                                                 | ltrim(" ZZZabcZZ ", " Z")                                                                |
+| match(X,Y)          | TRUE if X matches the regular expression pattern Y                                                                                                                                                                                                                                                                                                                   | match(field, "^\d{1,3}\.\d$")                                                            |
+| max(X,…)            | The maximum value in a series of data X,…                                                                                                                                                                                                                                                                                                                            | max(delay, mydelay)                                                                      |
+| md5(X)              | MD5 hash of a string value X                                                                                                                                                                                                                                                                                                                                         | md5(field)                                                                               |
+| min(X,…)            | The minimum value in a series of data X,…                                                                                                                                                                                                                                                                                                                            | min(delay, mydelay)                                                                      |
+| mvcount(X)          | Number of values of X                                                                                                                                                                                                                                                                                                                                                | mvcount(multifield)                                                                      |
+| mvfilter(X)         | Filters a multi-valued field based on the Boolean expression X                                                                                                                                                                                                                                                                                                       | mvfilter(match(email, "net$"))                                                           |
+| mvindex(X,Y,Z)      | Returns a subset of the multi-valued field X from start position (zero-based) Y to Z (optional)                                                                                                                                                                                                                                                                      | mvindex(multifield, 2)                                                                   |
+| mvjoin(X,Y)         | Joins the individual values of a multi-valued field X using string delimiter Y                                                                                                                                                                                                                                                                                       | mvjoin(address, ";")                                                                     |
+| now()               | Current time as Unix timestamp                                                                                                                                                                                                                                                                                                                                       | now()                                                                                    |
+| null()              | NULL value. This function takes no arguments.                                                                                                                                                                                                                                                                                                                        | null()                                                                                   |
+| nullif(X,Y)         | X if the two arguments, fields X and Y, are different. Otherwise returns NULL.                                                                                                                                                                                                                                                                                       | nullif(fieldX, fieldY)                                                                   |
+| random()            | Pseudo-random number ranging from 0 to 2147483647                                                                                                                                                                                                                                                                                                                    | random()                                                                                 |
+| relative_time (X,Y) | Unix timestamp value of relative time specifier Y applied to Unix timestamp X                                                                                                                                                                                                                                                                                        | relative_time(now(),"-1d@d")                                                             |
+| replace(X,Y,Z)      | A string formed by substituting string Z for every occurrence of regex string Y in string XThe example swaps the month and day numbers of a date.                                                                                                                                                                                                                    | replace(date, "^(\d{1,2})/(\d{1,2})/", "\2/\1/")                                         |
+| round(X,Y)          | X rounded to the number of decimal places specified by Y, or to an integer for omitted Y                                                                                                                                                                                                                                                                             | round(3.5)                                                                               |
+| rtrim(X,Y)          | X with the characters in (optional) Y trimmed from the right side. Trim spaces and tabs for unspecified Y                                                                                                                                                                                                                                                            | rtrim(" ZZZZabcZZ ", " Z")                                                               |
+| split(X,"Y")        | X as a multi-valued field, split by delimiter Y                                                                                                                                                                                                                                                                                                                      | split(address, ";")                                                                      |
+| sqrt(X)             | Square root of X                                                                                                                                                                                                                                                                                                                                                     | sqrt(9) # 3                                                                              |
+| strftime(X,Y)       | Unix timestamp value X rendered using the format specified by Y                                                                                                                                                                                                                                                                                                      | strftime(time, "%H:%M")                                                                  |
+| strptime(X,Y)       | Value of Unix timestamp X as a string parsed from format Y                                                                                                                                                                                                                                                                                                           | strptime(timeStr, "%H:%M")                                                               |
+| substr(X,Y,Z)       | Substring of X from start position (1-based) Y for (optional) Z characters                                                                                                                                                                                                                                                                                           | substr("string", 1, 3) #str                                                              |
+| time()              | Current time to the microsecond.                                                                                                                                                                                                                                                                                                                                     | time()                                                                                   |
+| tonumber(X,Y)       | Converts input string X to a number of numerical base Y (optional, defaults to 10)                                                                                                                                                                                                                                                                                   | tonumber("FF",16)                                                                        |
+| tostring(X,Y)       | Field value of X as a string.If X is a number, it reformats it as a string. If X is a Boolean value, it reformats to "True" or "False" strings.If X is a number, the optional second argument Y is one of:"hex": convert X to hexadecimal,"commas": formats X with commas and two decimal places, or"duration": converts seconds X to readable time format HH:MM:SS. | This example returns bar=00:08:20:| makeresults | eval bar = tostring(500, "duration")   |
+| typeof(X)           | String representation of the field type                                                                                                                                                                                                                                                                                                                              | This example returns&nbsp; "NumberBool":| makeresults | eval n=typeof(12) + typeof(1==2) |
+| urldecode(X)        | URL X, decoded.                                                                                                                                                                                                                                                                                                                                                      | urldecode("http%3A%2F%2Fwww.site.com%2Fview%3Fr%3Dabout")                                |
+| validate(X,Y,…)     | For pairs of Boolean expressions X and strings Y, returns the string Y corresponding to the first expression X which evaluates to False, and defaults to NULL if all X are True.                                                                                                                                                                                     | validate(isint(N), "Not an integer", N&gt;0, "Not positive")                             |
+
+
+
+## Statistical and Graphing Functions
+
+Common statistical functions used with the chart, stats, and timechart commands. Field names can contain wildcards (*), so avg(*delay) might calculate the average of the delay and *delay fields.
+
+| Function             | Return valueUsage: stats foo=… / chart bar=… / timechart t=…                                                                                  |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| avg(X)               | average of the values of field X                                                                                                              |
+| count(X)             | number of occurrences of the field X. To indicate a specific field value to match, format X as eval(field="desired_value").                   |
+| dc(X)                | count of distinct values of the field X                                                                                                       |
+| earliest(X)latest(X) | chronologically earliest/latest seen value of X                                                                                               |
+| max(X)               | maximum value of the field X. For non-numeric values of X, compute the max using alphabetical ordering.                                       |
+| median(X)            | middle-most value of the field X                                                                                                              |
+| min(X)               | minimum value of the field X. For non-numeric values of X, compute the min using alphabetical ordering.&nbsp;                                 |
+| mode(X)              | most frequent value of the field X                                                                                                            |
+| percN(Y)             | N-th percentile value of the field Y. N is a non-negative integer &lt; 100.Example: perc50(total) = 50th percentile value of the field total. |
+| range(X)             | difference between the max and min values of the field X                                                                                      |
+| stdev(X)             | sample standard deviation of the field X                                                                                                      |
+| stdevp(X)            | population standard deviation of the field X                                                                                                  |
+| sum(X)               | sum of the values of the field X                                                                                                              |
+| sumsq(X)             | sum of the squares of the values of the field X                                                                                               |
+| values(X)            | list of all distinct values of the field X as a multi-value entry. The order of the values is alphabetical                                    |
+| var(X)               | sample variance of the field X                                                                                                                |
+
+
+## Index Statistics
+
+Compute index-related statistics.
+
+From this point onward, `splunk` refers to the partial or full path of the Splunk app on your device `$SPLUNK_HOME/bin/splunk`, such as` /Applications/Splunk/bin/splunk` on macOS, or, if you have performed cd and entered `/Applications/Splunk/bin/`, simply `./splunk`.
+
+| Function                                                                                                                              | Description                                                                                          |
+|---------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| | eventcount summarize=false index=* | dedup index | fields index                                                                     | List all indexes on your Splunk instance. On the command line, use this instead:   splunk list index |
+| | eventcount summarize=false report_size=true index=* | eval size_MB = round(size_bytes/1024/1024,2)                                  | Show the number of events in your indexes and their sizes in MB and bytes                            |
+| | REST /services/data/indexes | table title currentDBSizeMB                                                                           | List the titles and current database sizes in MB of the indexes on your Indexers                     |
+| index=_internal source=*metrics.log group=per_index_thruput series=* | eval MB = round(kb/1024,2) | timechart sum(MB) as MB by series | Query write amount in MB per index from metrics.log                                                  |
+| index=_internal metrics kb series!=_* "group=per_host_thruput" | timechart fixedrange=t span=1d sum(kb) by series                     | Query write amount in KB per day per Indexer by each host                                            |
+| index=_internal metrics kb series!=_* "group=per_index_thruput" | timechart fixedrange=t span=1d sum(kb) by series                    | Query write amount in KB per day per Indexer by each index                                           |
+
+## Search Examples
+
+### Filter Results
+
+<table>
+<thead><tr><th>Description</th><th>Query</th></tr>
+</thead>
+<tbody><tr><td valign="top"><p>Returns X rounded to the amount of decimal places specified by Y. The default is to round to an integer.</p></td><td><p>round(3.5)</p></td></tr><tr><td valign="top"><p>Returns X with the characters in Y trimmed from the right side. If Y is not specified, spaces and tabs are trimmed.</p></td><td><p>rtrim(" ZZZZabcZZ ", " Z")</p></td></tr><tr><td valign="top"><p>Returns X as a multi-valued field, split by delimiter Y.</p></td><td><p>split(address, ";")</p></td></tr><tr><td valign="top"><p>Given pairs of arguments, Boolean expressions X and strings Y, returns the string Y corresponding to the first expression X that evaluates to False and defaults to NULL if all are True.</p></td><td><p>validate(isint(port), "ERROR: Port is not an integer", port &gt;= 1 AND port &lt;= 65535, "ERROR: Port is out of range")</p></td></tr></tbody></table>
+
+### Group Results
+
+<table>
+<thead><tr><th>Description</th><th>Query</th></tr>
+</thead>
+<tbody><tr><td valign="top"><p>Cluster results together, sort by their "cluster_count" values, and then return the 20 largest clusters (in data size).</p></td><td><p>… | cluster t=0.9 showcount=true | sort limit=20 -cluster_count</p></td></tr><tr><td valign="top"><p>Group results that have the same</p><p>"host" and "cookie", occur within 30 seconds of each other, and do not have a pause greater than 5 seconds between each event into a transaction.</p></td><td><p>… | transaction host cookie maxspan=30s maxpause=5s</p></td></tr><tr><td valign="top"><p>Group results with the same IP address (clientip) and where the first result contains "signon", and the last result contains "purchase".</p></td><td><p>… | transaction clientip startswith="signon" endswith="purchase"</p></td></tr></tbody></table>
+
+### Order Results 
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td valign="top"><p>Return the first 20 results.</p></td><td valign="top"><p>… | head 20</p></td></tr><tr><td valign="top"><p>Reverse the order of a result set.</p></td><td valign="top"><p>… | reverse</p></td></tr><tr><td valign="top"><p>Sort results by "ip" value (in ascending order) and then by "url" value (in descending order).</p></td><td><p>… | sort ip, -url</p></td></tr><tr><td valign="top"><p>Return the last 20 results in reverse order.</p></td><td><p>… | tail 20</p></td></tr></tbody></table>
+
+
+### Reporting
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td><p>Return the average and count using a 30 second span of all metrics ending in cpu.percent split by each metric name.</p></td><td valign="top"><p>| mstats avg(_value), count(_value) WHERE metric_name=”*.cpu.percent” by metric_name span=30s</p></td></tr><tr><td valign="top"><p>Return max(delay) for each value of foo split by the value of bar.</p></td><td valign="top"><p>… | chart max(delay) over foo by bar</p></td></tr><tr><td valign="top"><p>Return max(delay) for each value of foo.</p></td><td valign="top"><p>… | chart max(delay) over fo o</p></td></tr><tr><td valign="top"><p>Count&nbsp; the events by "host"</p></td><td valign="top"><p>… | stats count by host</p></td></tr><tr><td valign="top"><p>Create a table showing the count of events and a small line chart</p></td><td valign="top"><p>… | stats sparkline count by host</p></td></tr><tr><td valign="top"><p>Create a timechart of the count of from "web" sources by "host"</p></td><td valign="top"><p>… | timechart count by host</p></td></tr><tr><td valign="top"><p>Calculate the average value of</p><p>"CPU" each minute for each "host".</p></td><td valign="top"><p>… | timechart span=1m avg(CPU) by host</p></td></tr><tr><td valign="top"><p>Return the average for each hour, of any unique field that ends with the string "lay" (e.g., delay, xdelay, relay, etc).</p></td><td><p>… | stats avg(*lay) by date_hour</p></td></tr><tr><td valign="top"><p>Return the 20 most common values of the "url" field.</p></td><td><p>… | top limit=20 url</p></td></tr><tr><td valign="top"><p>Return the least common values of the "url" field.</p></td><td><p>… | rare url</p></td></tr></tbody></table>
+
+### Advanced Reporting
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td valign="top"><p>Compute the overall average duration and add 'avgdur' as a new field to each event where the 'duration' field exists</p></td><td><p>... | eventstats avg(duration) as avgdur</p></td></tr><tr><td><p>Find the cumulative sum of bytes.</p></td><td valign="top"><p>... | streamstats sum(bytes) as bytes_total | timechart max(bytes_ total)</p></td></tr><tr><td><p>Find anomalies in the field ‘Close_ Price’ during the last 10 years.</p></td><td valign="top"><p>sourcetype=nasdaq earliest=-10y | anomalydetection Close_Price</p></td></tr><tr><td valign="top"><p>Create a chart showing the count of events with a predicted value and range added to each event in the time-series.</p></td><td><p>... | timechart count | predict count</p></td></tr><tr><td valign="top"><p>Computes a five event simple moving average for field ‘count’ and write to new field ‘smoothed_ count.’</p></td><td><p>“... | timechart count | trendline sma5(count) as smoothed_count”</p></td></tr></tbody></table>
+
+
+### Metrics
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td><p>List all of the metric names in the “_metrics” metric index.</p></td><td valign="top"><p>| mcatalog values(metric_ name) WHERE index=_ metrics</p></td></tr><tr><td valign="top"><p>See examples of the metric data points stored in the “_metrics” metric index.</p></td><td valign="top"><p>| mpreview index=_ metrics target_per_ timeseries=5</p></td></tr><tr><td valign="top"><p>Return the average value of a metric in the “_metrics” metric index. Bucket the results into 30 second time spans.</p></td><td><p>| mstats avg(aws.ec2. CPUUtilization) WHERE index=_metrics span=30s</p></td></tr></tbody></table>
+
+
+### Add Fields
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td><p>Set velocity to distance / time.</p></td><td valign="top"><p>… | eval velocity=distance/time</p></td></tr><tr><td valign="top"><p>Extract "from" and "to" fields using regular expressions. If a raw event contains "From: Susan To: David", then from=Susan and to=David.</p></td><td><p>… | rex field=_raw "From: (?&lt;from&gt;.*) To: (?&lt;to&gt;.*)"</p></td></tr><tr><td valign="top"><p>Save the running total of "count" in a field called "total_count".</p></td><td valign="top"><p>… | accum count as total_count</p></td></tr><tr><td valign="top"><p>For each event where 'count' exists, compute the difference between count and its previous value and store the result in 'countdiff'.</p></td><td><p>… | delta count as countdiff</p></td></tr></tbody></table>
+
+### Filter Fields
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td valign="top"><p>Keep only the "host" and "ip" fields, and display them in that order.</p></td><td><p>… | fields + host, ip</p></td></tr><tr><td valign="top"><p>Remove the “host” and “ip” fields from the results.</p></td><td><p>… | fields - host, ip</p></td></tr></tbody></table>
+
+### Modify Fields
+
+<table><tbody><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tr><td valign="top"><p>Rename the "_ip" field as "IPAddress".</p></td><td><p>… | rename _ip as IPAddress</p></td></tr></tbody></table>
+
+### Regular Expressions (Regexes)
+
+Regular Expressions are useful in multiple areas: search commands regex and rex; eval functions match() and replace(); and in field extraction.
+
+| Regex                                                                                                                                           | Note                                  | Example                             | Explanation                               |
+| :---- | :----  | :----  | :---- |
+| \s                                                                                                                                              | white space                           | \d\s\d                              | digit space digit                         |
+| \S                                                                                                                                              | not white space                       | \d\S\d                              | digit nonwhitespace digit                 |
+| \d                                                                                                                                              | digit                                 | \d\d\d-\d\d-\d\d\d\d                | SSN                                       |
+| \D                                                                                                                                              | not digit                             | \D\D\D                              | three non-digits                          |
+| \w                                                                                                                                              | word character (letter, number, or _) | \w\w\w                              | three word chars                          |
+| \W                                                                                                                                              | not a word character                  | \W\W\W                              | three non-word chars                      |
+| [...]                                                                                                                                           | any included character                | [a-z0-9#]                           | any char that is a thru z, 0 thru 9, or # |
+| [^...]                                                                                                                                          | no included character                 | [^xyz]                              | any char but x, y, or z                   |
+| *                                                                                                                                               | zero or more                          | \w*                                 | zero or more words chars                  |
+| +                                                                                                                                               | one or more                           | \d+                                 | integer                                   |
+| ?                                                                                                                                               | zero or one                           | \d\d\d-?\d\d-?\d\d\d\d              | SSN with dashes being optional            |
+| |                                                                                                                                               | or                                    | \w|\d                               | word or digit character                   |
+| (?P&lt;var&gt;...)                                                                                                                              | named extraction                      | (?P&lt;ssn&gt;\d\d\d-\d\d-\d\d\d\d) | pull out a SSN and assign to 'ssn' field  |
+| (?: ...)                                                                                                                                        | logical or atomic grouping            | (?:[a-zA-Z]|\d)                     | alphabetic character OR a digit           |
+| ^                                                                                                                                               | start of line                         | ^\d+                                | line begins with at least one digit       |
+| $                                                                                                                                               | end of line                           | \d+$                                | line ends with at least one digit         |
+| {...}                                                                                                                                           | number of repetitions                 | \d{3,5}                             | between 3-5 digits                        |
+| \                                                                                                                                               | escape                                | \[                                  | escape the [ character                    |
+
+
+### Multi-Valued Fields
+
+<table><thead><tr><th>Description</th><th>Query</th></tr>
+</thead><tbody><tr><td valign="top"><p>Combine the multiple values of the recipients field into a single value</p></td><td><p>… | nomv recipients</p></td></tr><tr><td valign="top"><p>Separate the values of the "recipients" field into multiple field values, displaying the top recipients</p></td><td><p>… | makemv delim="," recipients | top recipients</p></td></tr><tr><td valign="top"><p>Create new results for each value of the multivalue field "recipients"</p></td><td><p>… | mvexpand recipients</p></td></tr><tr><td valign="top"><p>Find the number of recipient values</p></td><td valign="top"><p>… | eval to_count = mvcount(recipients)</p></td></tr><tr><td valign="top"><p>Find the first email address in the recipient field</p></td><td valign="top"><p>… | eval recipient_first = mvindex(recipient,0)</p></td></tr><tr><td><p>Find all recipient values that end in .net or .org</p></td><td valign="top"><p>… | eval netorg_ recipients = mvfilter match(recipient,"\.net$") OR match(recipient,"\.org$"))</p></td></tr><tr><td valign="top"><p>Find the index of the first recipient value match “\.org$”</p></td><td valign="top"><p>… | eval orgindex = mvfind(recipient, "\.org$")</p></td></tr></tbody></table>
+
+### Common Date and Time Formatting
+
+Use these values for eval functions strftime() and strptime(), and for timestamping event data.
+
+<table>
+<thead><tr><th>Period</th><th>Value</th><th>Description</th></tr>
+<tbody><tr><td rowspan="9"><p><b>Time</b></p></td><td valign="top"><p>%H</p></td><td valign="top"><p>24 hour (leading zeros) (00 to 23)</p></td></tr><tr><td valign="top"><p>%I</p></td><td valign="top"><p>12 hour (leading zeros) (01 to 12)</p></td></tr><tr><td valign="top"><p>%M</p></td><td valign="top"><p>Minute (00 to 59)</p></td></tr><tr><td valign="top"><p>%S</p></td><td valign="top"><p>Second (00 to 61)</p></td></tr><tr><td><p>%N</p></td><td valign="top"><p>subseconds with width (%3N = millisecs, %6N = microsecs, %9N = nanosecs)</p></td></tr><tr><td valign="top"><p>%p</p></td><td valign="top"><p>AM or PM</p></td></tr><tr><td valign="top"><p>%Z</p></td><td valign="top"><p>Time zone (EST)</p></td></tr><tr><td><p>%z</p></td><td valign="top"><p>Time zone offset from UTC, in hour and minute: +hhmm or -hhmm. (-0500 for EST)</p></td></tr><tr><td valign="top"><p>%s</p></td><td valign="top"><p>Seconds since 1/1/1970 (1308677092)</p></td></tr><tr><td rowspan="5"><p><b>Days</b></p></td><td valign="top"><p>%d</p></td><td valign="top"><p>Day of month (leading zeros) (01 to 31)</p></td></tr><tr><td valign="top"><p>%j</p></td><td valign="top"><p>Day of year (001 to 366)</p></td></tr><tr><td valign="top"><p>%w</p></td><td valign="top"><p>Weekday (0 to 6)</p></td></tr><tr><td valign="top"><p>%a</p></td><td valign="top"><p>Abbreviated weekday (Sun)</p></td></tr><tr><td valign="top"><p>%A</p></td><td valign="top"><p>Weekday (Sunday)</p></td></tr><tr><td rowspan="3"><p><b>Months</b></p></td><td valign="top"><p>%b</p></td><td valign="top"><p>Abbreviated month name (Jan)</p></td></tr><tr><td valign="top"><p>%B</p></td><td valign="top"><p>Month name (January)</p></td></tr><tr><td valign="top"><p>%m</p></td><td valign="top"><p>Month number (01 to 12)</p></td></tr><tr><td rowspan="2"><p><b>Years</b></p></td><td valign="top"><p>%y</p></td><td valign="top"><p>Year without century (00 to 99)</p></td></tr><tr><td valign="top"><p>%Y</p></td><td valign="top"><p>Year (2021)</p></td></tr><tr><td rowspan="5"><p><b>Examples</b></p></td><td valign="top"><p>%Y-%m-%d</p></td><td valign="top"><p>2021-12-31</p></td></tr><tr><td valign="top"><p>%y-%m-%d</p></td><td valign="top"><p>21-12-31</p></td></tr><tr><td valign="top"><p>%b %d, %Y</p></td><td valign="top"><p>Jan 24, 2021</p></td></tr><tr><td valign="top"><p>%B %d, %Y</p></td><td valign="top"><p>January 24, 2021</p></td></tr><tr><td valign="top"><p>q|%d %b '%y= %Y-%m-%d</p></td><td><p>q|25 Feb '21 = 2021-02-25|</p></td></tr></tbody></table>
+
+### Resources
+
+- [Awesome Splunk](https://github.com/sduff/awesome-splunk)
+- [Splunk Cheat Sheet](https://www.stationx.net/splunk-cheat-sheet/)
+- [Splunk Command Generator](https://www.stationx.net/splunk-cheat-sheet/#splunk-command-generator)
+- [Splunk Cheat Sheet: Query, SPL, RegEx, & Commands](https://www.splunk.com/en_us/blog/learn/splunk-cheat-sheet-query-spl-regex-commands.html)

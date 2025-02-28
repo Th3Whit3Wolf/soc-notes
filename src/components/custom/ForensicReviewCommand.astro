@@ -1,0 +1,20 @@
+---
+import { Code } from 'astro/components';
+
+interface Props {
+	command: string;
+}
+
+const { command } = Astro.props;
+---
+
+<div>
+	<span class="flex">
+	    <strong class="font-lg">Command: </strong> 
+        <Code lang="shell" code={command} class='flex-grow custom-code'/>
+    </span>
+	<span><slot /></span>
+
+</div>
+
+

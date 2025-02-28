@@ -1,0 +1,14 @@
+---
+interface Props {
+	location: string;
+}
+
+const { location } = Astro.props;
+---
+
+<div>
+	<span>
+	<strong>Location: </strong> <code>{location}</code>
+</span>
+	<span><slot /></span>
+</div>
