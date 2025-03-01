@@ -2,7 +2,7 @@
 title: Yara
 template: doc
 hero: 
-    title: 'Zeek is an open-source & commercial network monitoring tool'
+    title: Yara
     tagline: Virustotal's file scanning engine and ruleset
 ---
 
