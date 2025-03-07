@@ -419,6 +419,7 @@ Use these values for eval functions strftime() and strptime(), and for timestamp
 
 - [TryHackMe Splunk 2 Walkthrough](https://otuva.medium.com/tryhackme-splunk-2-walkthrough-splunk2gcd5-7def8b3c771d)
 - [FalconEye: Splunk Threat Hunting](https://infosecwriteups.com/falconeye-splunk-threat-hunting-79309a47fbb0)
+- [Essential Splunk Quick Reference Guide](https://www.splunk.com/en_us/resources/splunk-quick-reference-guide.html)
 - [Awesome Splunk](https://github.com/sduff/awesome-splunk)
 - [Splunk Cheat Sheet](https://www.stationx.net/splunk-cheat-sheet/)
 - [Splunk Command Generator](https://www.stationx.net/splunk-cheat-sheet/#splunk-command-generator)
