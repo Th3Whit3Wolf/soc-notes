@@ -244,3 +244,8 @@ Get-MpPreference | Select-Object -ExpandProperty ExclusionProcess
 ```PowerShell
 Get-MpPreference | Select-Object -ExpandProperty ExclusionExtension
 ```
+
+
+## More Resources
+
+- [Powershell DFIR](https://github.com/Bert-JanP/Incident-Response-Powershell)
