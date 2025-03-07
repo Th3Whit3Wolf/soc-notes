@@ -88,6 +88,13 @@ Provide a specific user to the command to only get information about them
 Get-LocalUser -Name me | select *
 ```
 
+### List All Local Users With Admin Privilieges
+
+```powershell
+Get-LocalGroupMember -Group "Administrators"
+```
+
+
 ### Identify Running Services (in seperate window)
 
 Quickly identify running services on the system in a nice separate window,
