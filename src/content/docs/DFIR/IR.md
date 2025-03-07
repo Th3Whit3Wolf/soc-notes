@@ -70,6 +70,33 @@ Get-NetIPConfiguration
 Get-NetIPAddress
 ```
 
+#### Show All Open Connections
+```PowerShell
+Get-NetTCPConnection -State Established
+```
+
+#### Show Connections Made By Office Applications
+```PowerShell
+Get-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Office\16.0\Common\Internet\Server Cache*
+```
+
+If this command returns an error check if your version is correct. If that is the case then no connection was made from office.
+
+#### Network Shares
+```PowerShell
+Get-ChildItem -Path HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\
+```
+
+#### SMB Shares
+```PowerShell
+Get-SmbShare
+```
+
+#### RDP Sessions
+```PowerShell
+qwinsta /server:localhost
+```
+
 ### List All Local Users
 
 ```powershell
@@ -94,13 +121,17 @@ Get-LocalUser -Name me | select *
 Get-LocalGroupMember -Group "Administrators"
 ```
 
-
 ### Identify Running Services (in seperate window)
 
 Quickly identify running services on the system in a nice separate window,
 
 ```powershell
 Get-Service | Where Status -eq "Running" | Out-GridView
+```
+
+### Detailed Proces Information by Procesname
+```PowerShell
+Get-Process explorer | Format-List *
 ```
 
 ### Group Running Processes by Priority
@@ -117,10 +148,25 @@ This will grab the process with the `ID` idhere and display all of that process'
 Get-Process -Id 'idhere' | Select *
 ```
 
+### Process CommandLine
+```PowerShell
+Get-WmiObject Win32_Process | Select-Object Name,  ProcessId, CommandLine, Path | Format-List
+```
+
 ### Get Scheduled Tasks
 
 ```powershell
 Get-ScheduledTask
+```
+
+### Scheduled Task List
+```PowerShell
+Get-ScheduledTask | Where-Object {$_.State -ne "Disabled"} | Format-List
+```
+
+### Scheduled Task List Run Status
+```PowerShell
+Get-ScheduledTask | Where-Object {$_.State -ne "Disabled"} | Get-ScheduledTaskInfo
 ```
 
 ### Get Specific Scheduled Tasks and Display All of its Properties
@@ -133,4 +179,68 @@ Get-ScheduledTask -TaskName 'PutANameHere' | Select *
 
 ```powershell
 Set-ExecutionPolicy Bypass -Scope CurrentUser
+```
+
+### Persistence
+
+#### Collect All Startup Files
+```PowerShell
+Get-CimInstance -ClassName Win32_StartupCommand |
+  Select-Object -Property Command, Description, User, Location |
+  Out-GridView
+```
+
+### Windows Security Events
+
+#### Collect The Last 10 Windows Security Event Logs Filter on EventID
+```PowerShell
+Get-WinEvent -FilterHashtable @{LogName='Security';ID=4688} -MaxEvents 10 | Format-List *
+```
+
+#### Count By Event Last 2 Days
+```PowerShell
+$SecurityEvents = Get-EventLog -LogName security -After (Get-Date).AddDays(-2)
+$SecurityEvents | Group-Object -Property EventID -NoElement | Sort-Object -Property Count -Descending
+```
+
+#### Collect Detailed Information All Windows Security Events Last 2 Days
+```PowerShell
+$SecurityEvents = Get-EventLog -LogName security -After (Get-Date).AddDays(-2)
+$SecurityEvents | Group-Object -Property EventID -NoElement | Sort-Object -Property Count -Descending
+```
+
+#### Windows Security Events to CSV
+```PowerShell
+$ExecutionDate = $(get-date -f yyyy-MM-dd)
+$OutputName = "SecurityEvents-$ExecutionDate.csv"
+Get-EventLog -LogName Security | Export-Csv -Path $OutputName -NoTypeInformation
+if (Test-Path -Path $OutputName) {
+    $folderPath = (Get-Item $OutputName).DirectoryName
+    Write-Host "Output File Location: $folderPath\$OutputName"
+} else {
+    Write-Host "File does not exist."
+}
+```
+
+### Defender Exclusions
+List the defender exclusions that are defined for your (local) machine.
+
+#### IP
+```PowerShell
+Get-MpPreference | Select-Object -ExpandProperty ExclusionIpAddress
+```
+#### FolderPath
+```PowerShell
+Get-MpPreference | Select-Object -ExpandProperty ExclusionPath
+```
+
+#### Process
+
+```PowerShell
+Get-MpPreference | Select-Object -ExpandProperty ExclusionProcess
+```
+
+#### Extension
+```PowerShell
+Get-MpPreference | Select-Object -ExpandProperty ExclusionExtension
 ```
