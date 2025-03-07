@@ -76,6 +76,12 @@ Get-NetIPAddress
 Get-LocalUser
 ```
 
+Display all user and display when they last logged on
+
+```powershell
+Get-LocalUser | Select-Object Name, LastLogon
+```
+
 Provide a specific user to the command to only get information about them
 
 ```powershell
