@@ -5,6 +5,68 @@ hero:
     title: 'Email Related Cheat Sheet'
 ---
 
+import { Tabs, TabItem, Code } from '@astrojs/starlight/components';
+const bashScript = `#!/bin/bash
+
+# Set the directory containing the email files
+email_dir="$1"
+
+# Check if the directory exists
+if [[ ! -d "$email_dir" ]]; then
+  echo "Error: Directory '$email_dir' not found."
+  exit 1
+fi
+
+# Find all files in the directory and loop through them
+find "$email_dir" -type f -print0 | while IFS= read -r -d $'\0' file; do
+  # Extract email addresses from the current file using grep
+  emails=$(grep -oE "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" "$file")
+
+  # If emails were found, print them along with the file name
+  if [[ -n "$emails" ]]; then
+    echo "File: $file"
+    echo "$emails"
+    echo "" # Add an empty line for separation
+  fi
+done
+`;
+
+const powershellScript = `
+# Set the path to the folder containing the email files
+$folderPath = "C:\path\to\your\email\folder"
+
+# Get all files in the folder with a .txt or .eml extension
+$emailFiles = Get-ChildItem -Path $folderPath -Filter "*.txt, *.eml"
+
+# Create an empty array to store the extracted email addresses
+$emailAddresses = @()
+
+# Loop through each email file
+foreach ($file in $emailFiles) {
+    # Read the content of the email file
+    $emailContent = Get-Content -Path $file.FullName -Raw
+
+    # Use a regular expression to find all email addresses in the content
+    $matches = Select-String -InputObject $emailContent -Pattern '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b' -AllMatches
+
+    # Loop through each match and add the email address to the array
+    foreach ($match in $matches.Matches) {
+        $emailAddresses += $match.Value
+    }
+}
+
+# Remove duplicate email addresses
+$uniqueEmailAddresses = $emailAddresses | Sort-Object -Unique
+
+# Output the extracted email addresses
+Write-Output "Extracted Email Addresses:"
+$uniqueEmailAddresses
+
+# Optionally, export the email addresses to a CSV file
+$uniqueEmailAddresses | Export-Csv -Path "C:\emails\extracted_emails.csv" -NoTypeInformation
+`;
+
+
 ### Gathering IOCs
 
 1. **Email Artifacts** :
@@ -146,6 +208,20 @@ Taken from [Wireshark](https://www.wireshark.org/docs/dfref/s/smtp.html)
 |smtp.rsp.parameter|Response parameter|Character string|1.0.0 to 4.4.5|
 
 </details>
+
+## Scripts
+
+### Extract Emails Address from Multiple Emails
+
+<Tabs>
+  <TabItem label="Bash" icon="seti:shell">
+  <Code code={bashScript} lang="bash" title={"extract_emails.sh"}  />
+  </TabItem>
+  <TabItem label="PowerShell" icon="seti:powershell">
+    <Code code={powershellScript} lang="powershell" title={"extract_emails.ps1"}  />
+
+  </TabItem>
+</Tabs>
 
 ## Other Resources
 
